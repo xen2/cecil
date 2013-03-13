@@ -100,7 +100,7 @@ namespace Mono.Cecil.Cil {
 
 			WriteBytes (buffer);
 
-			if (symbols.instructions.IsNullOrEmpty ())
+			if (!WriteSymbols (symbols))
 				return;
 
 			symbols.method_token = method.token;
@@ -109,6 +109,12 @@ namespace Mono.Cecil.Cil {
 			var symbol_writer = metadata.symbol_writer;
 			if (symbol_writer != null)
 				symbol_writer.Write (symbols);
+		}
+
+		private bool WriteSymbols (MethodSymbols symbols)
+		{
+			return !symbols.instructions.IsNullOrEmpty ()
+				|| !string.IsNullOrEmpty(symbols.iterator_type);
 		}
 
 		static MetadataToken GetLocalVarToken (ByteBuffer buffer, MethodSymbols symbols)

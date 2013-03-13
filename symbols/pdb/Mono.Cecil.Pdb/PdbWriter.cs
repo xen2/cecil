@@ -63,8 +63,10 @@ namespace Mono.Cecil.Pdb {
 			var method_token = body.Method.MetadataToken;
 			var sym_token = new SymbolToken (method_token.ToInt32 ());
 
+			var has_iterator_type = body.debug_information != null && body.debug_information.iterator_type != null;
+
 			var instructions = CollectInstructions (body);
-			if (instructions.Count == 0)
+			if (instructions.Count == 0 && !has_iterator_type)
 				return;
 
 			var start_offset = 0;
@@ -86,7 +88,7 @@ namespace Mono.Cecil.Pdb {
 			}
 
 			if (debug_info.iterator_type != null)
-				DefineIteratorType   (sym_token, debug_info.iterator_type.Name);
+				DefineIteratorType (sym_token, debug_info.iterator_type.Name);
 
 			if (debug_info.iterator_scopes != null)
 				DefineIteratorScopes (sym_token, debug_info.iterator_scopes, body.CodeSize);
@@ -233,7 +235,7 @@ namespace Mono.Cecil.Pdb {
 
 			foreach (var scope in scopes) {
 				buffer.WriteInt32 (scope.Start.Offset);
-				buffer.WriteInt32 (scope.End.Next != null ? scope.End.Next.Offset : code_size);
+				buffer.WriteInt32 (scope.End != null ? scope.End.Offset : code_size);
 			}
 
 			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);

@@ -134,12 +134,8 @@ namespace Mono.Cecil.Pdb {
 
 		static void PopulateInstructionRange (InstructionRange range, uint offset, uint length, MethodBody body, InstructionMapper mapper)
 		{
-			var next = mapper ((int) (offset + length));
-
 			range.Start = mapper ((int) offset);
-			range.End = next != null
-				? next.Previous
-				: body.Instructions [body.Instructions.Count - 1];
+			range.End = mapper ((int) (offset + length)) ?? body.Instructions [body.Instructions.Count - 1];
 		}
 
 		static void ReadScopeAndLocals (PdbScope [] scopes, Scope parent, MethodBody body, InstructionMapper mapper)
