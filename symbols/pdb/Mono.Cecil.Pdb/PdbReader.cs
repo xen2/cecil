@@ -115,24 +115,31 @@ namespace Mono.Cecil.Pdb {
 			ReadScopeAndLocals (function.scopes, null, body, mapper);
 
 			if (!string.IsNullOrEmpty (function.iteratorClass))
-				body.IteratorType = body.Method.DeclaringType.GetNestedType (function.iteratorClass);
+				DebugInformationFor (body).IteratorType = body.Method.DeclaringType.GetNestedType (function.iteratorClass);
 
-			if (function.iteratorScopes != null)
-				foreach (Microsoft.Cci.ILocalScope scope in function.iteratorScopes)
-				{
-					InstructionRange range = new InstructionRange ();
-					SetInstructionRange (body, mapper, range, scope.Offset, scope.Length);
-					body.IteratorScopes.Add (range);
-				}
+			if (function.iteratorScopes == null)
+				return;
+
+			foreach (var scope in function.iteratorScopes) {
+				var range = new InstructionRange ();
+				PopulateInstructionRange (range, scope.Offset, scope.Length, body, mapper);
+				DebugInformationFor (body).IteratorScopes.Add (range);
+			}
 		}
 
-		static void SetInstructionRange (MethodBody body, InstructionMapper mapper,	InstructionRange range, uint offset, uint length)
+		static MethodDebugInformation DebugInformationFor (MethodBody body)
 		{
-			range.Start = mapper ((int) offset);
-			range.End   = mapper ((int)(offset + length));
+			return body.debug_information ?? (body.debug_information = new MethodDebugInformation ());
+		}
 
-			if (range.End == null) range.End = body.Instructions[body.Instructions.Count - 1];
-			else                   range.End = range.End.Previous;
+		static void PopulateInstructionRange (InstructionRange range, uint offset, uint length, MethodBody body, InstructionMapper mapper)
+		{
+			var next = mapper ((int) (offset + length));
+
+			range.Start = mapper ((int) offset);
+			range.End = next != null
+				? next.Previous
+				: body.Instructions [body.Instructions.Count - 1];
 		}
 
 		static void ReadScopeAndLocals (PdbScope [] scopes, Scope parent, MethodBody body, InstructionMapper mapper)
@@ -150,45 +157,45 @@ namespace Mono.Cecil.Pdb {
 
 			var instructions = body.Instructions;
 
-			var root = new Scope ();
-			root.Start = instructions [0];
-			root.End = instructions [instructions.Count - 1];
+			var root = new Scope {
+				Start = instructions [0],
+				End = instructions [instructions.Count - 1]
+			};
 
 			var variables = body.Variables;
 			for (int i = 0; i < variables.Count; i++)
 				root.Variables.Add (variables [i]);
 
-			body.Scope = root;
+			body.DebugInformation.Scope = root;
 		}
 
-		static void ReadScopeAndLocals (PdbScope scope, Scope parent, MethodBody body, InstructionMapper mapper)
+		static void ReadScopeAndLocals (PdbScope pdbScope, Scope parent, MethodBody body, InstructionMapper mapper)
 		{
-			if (scope == null)
+			if (pdbScope == null)
 				return;
 
-			Scope s = new Scope ();
-			SetInstructionRange (body, mapper, s, scope.offset, scope.length);
+			var scope = new Scope ();
+			PopulateInstructionRange (scope, pdbScope.offset, pdbScope.length, body, mapper);
 
 			if (parent != null)
-				parent.Scopes.Add (s);
+				parent.Scopes.Add (scope);
+			else if (DebugInformationFor (body).Scope == null)
+				DebugInformationFor (body).Scope = scope;
 			else
-			if (body.Scope == null)
-				body.Scope = s;
-			else
-				throw new InvalidDataException () ;
+				throw new NotSupportedException () ;
 
-			foreach (PdbSlot slot in scope.slots) {
+			foreach (var slot in pdbScope.slots) {
 				int index = (int) slot.slot;
 				if (index < 0 || index >= body.Variables.Count)
 					continue;
 
-				VariableDefinition variable = body.Variables [index];
+				var variable = body.Variables [index];
 				variable.Name = slot.name;
 
-				s.Variables.Add (variable);
+				scope.Variables.Add (variable);
 			}
 
-			ReadScopeAndLocals (scope.scopes, s, body, mapper);
+			ReadScopeAndLocals (pdbScope.scopes, scope, body, mapper);
 		}
 
 		void ReadSequencePoints (PdbFunction function, InstructionMapper mapper)
@@ -196,7 +203,7 @@ namespace Mono.Cecil.Pdb {
 			if (function.lines == null)
 				return;
 
-			foreach (PdbLines lines in function.lines)
+			foreach (var lines in function.lines)
 				ReadLines (lines, mapper);
 		}
 
@@ -214,13 +221,12 @@ namespace Mono.Cecil.Pdb {
 			if (instruction == null)
 				return;
 
-			var sequence_point = new SequencePoint (document);
-			sequence_point.StartLine = (int) line.lineBegin;
-			sequence_point.StartColumn = (int) line.colBegin;
-			sequence_point.EndLine = (int) line.lineEnd;
-			sequence_point.EndColumn = (int) line.colEnd;
-
-			instruction.SequencePoint = sequence_point;
+			instruction.SequencePoint = new SequencePoint (document) {
+				StartLine = (int) line.lineBegin,
+				StartColumn = (int) line.colBegin,
+				EndLine = (int) line.lineEnd,
+				EndColumn = (int) line.colEnd
+			};
 		}
 
 		Document GetDocument (PdbSource source)
@@ -251,14 +257,15 @@ namespace Mono.Cecil.Pdb {
 			if (!string.IsNullOrEmpty (function.iteratorClass))
 				symbols.IteratorType = function.iteratorClass;
 
-			if (function.iteratorScopes != null)
-				foreach (Microsoft.Cci.ILocalScope scope in function.iteratorScopes)
-				{
-					InstructionRangeSymbol range = new InstructionRangeSymbol ();
-					range.start = (int) scope.Offset;
-					range.end   = (int)(scope.Offset + scope.Length);
-					symbols.IteratorScopes.Add (range);
-				}
+			if (function.iteratorScopes == null)
+				return;
+
+			foreach (var scope in function.iteratorScopes) {
+				symbols.IteratorScopes.Add (new InstructionRangeSymbol {
+					start = (int) scope.Offset,
+					end = (int) (scope.Offset + scope.Length)
+				});
+			}
 		}
 
 		void ReadLocals (PdbScope [] scopes, MethodSymbols symbols)
@@ -289,7 +296,7 @@ namespace Mono.Cecil.Pdb {
 			if (function.lines == null)
 				return;
 
-			foreach (PdbLines lines in function.lines)
+			foreach (var lines in function.lines)
 				ReadLines (lines, symbols);
 		}
 

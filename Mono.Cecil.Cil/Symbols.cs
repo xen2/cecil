@@ -47,6 +47,27 @@ namespace Mono.Cecil.Cil {
 		public int PointerToRawData;
 	}
 
+	public sealed class MethodDebugInformation {
+
+		internal Scope scope;
+		internal TypeDefinition iterator_type;
+		internal Collection<InstructionRange> iterator_scopes;
+
+		public Scope Scope {
+			get { return scope; }
+			set { scope = value; }
+		}
+
+		public TypeDefinition IteratorType {
+			get { return iterator_type; }
+			set { iterator_type = value; }
+		}
+
+		public Collection<InstructionRange> IteratorScopes {
+			get { return iterator_scopes ?? (iterator_scopes = new Collection<InstructionRange>()); }
+		}
+	}
+
 	public class InstructionRange {
 
 		Instruction start;

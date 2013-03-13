@@ -139,20 +139,26 @@ namespace Mono.Cecil.Mdb {
 				if (block.BlockType != CodeBlockEntry.Type.Lexical)
 					continue;
 
-				var scope = new Scope ();
-				scope.Start = mapper (block.StartOffset);
-				scope.End = mapper (block.EndOffset);
+				var scope = new Scope {
+					Start = mapper (block.StartOffset),
+					End = mapper (block.EndOffset)
+				};
 
 				scopes [block.Index] = scope;
 
-				if (body.Scope == null)
-					body.Scope = scope;
+				if (DebugInformationFor (body).Scope == null)
+					DebugInformationFor (body).Scope = scope;
 
-				if (!AddScope (body.Scope, scope))
-					body.Scope = scope;
+				if (!AddScope(DebugInformationFor (body).Scope, scope))
+					DebugInformationFor (body).Scope = scope;
 			}
 
 			return scopes;
+		}
+
+		static MethodDebugInformation DebugInformationFor (MethodBody body)
+		{
+			return body.debug_information ?? (body.debug_information = new MethodDebugInformation ());
 		}
 
 		static bool AddScope (Scope provider, Scope scope)
