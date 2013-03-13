@@ -219,7 +219,7 @@ namespace Mono.Cecil.Cil {
 			get { return iterator_type; }
 			set { iterator_type = value; }
 		}
-		
+
 		public MetadataToken LocalVarToken {
 			get { return local_var_token; }
 		}

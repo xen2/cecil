@@ -175,16 +175,16 @@ namespace Mono.Cecil.Pdb {
 			buffer.WriteByte (4);
 			buffer.WriteByte (4);
 			buffer.Align	 (4);
-		
+
 			var length = 10 + (uint) name.Length * 2;
 			while (length % 4 > 0)
 				length++;
-		
+
 			buffer.WriteUInt32 (length);
 			buffer.WriteBytes (System.Text.Encoding.Unicode.GetBytes (name));
 			buffer.WriteByte (0);
 			buffer.Align	 (4);
-		
+
 			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);
 		}
 
@@ -197,16 +197,16 @@ namespace Mono.Cecil.Pdb {
 			buffer.WriteByte (4);
 			buffer.WriteByte (3);
 			buffer.Align	 (4);
-		
+
 			buffer.WriteInt32 (scopes.Count * 8 + 12);
 			buffer.WriteInt32 (scopes.Count);
-		
+
 			foreach (RangeSymbol scope in scopes)
 			{
 				buffer.WriteInt32 (scope.Start);
 				buffer.WriteInt32 (scope.End);
 			}
-		
+
 			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);
 		}
 
@@ -219,16 +219,16 @@ namespace Mono.Cecil.Pdb {
 			buffer.WriteByte (4);
 			buffer.WriteByte (3);
 			buffer.Align	 (4);
-		
+
 			buffer.WriteInt32 (scopes.Count * 8 + 12);
 			buffer.WriteInt32 (scopes.Count);
-		
+
 			foreach (InstructionRange scope in scopes)
 			{
 				buffer.WriteInt32 (scope.Start.Offset);
 				buffer.WriteInt32 (scope.End.Next != null ? scope.End.Next.Offset : code_size);
 			}
-		
+
 			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);
 		}
 

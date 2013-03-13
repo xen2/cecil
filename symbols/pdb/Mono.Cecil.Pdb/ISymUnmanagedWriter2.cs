@@ -60,9 +60,9 @@ namespace Mono.Cecil.Pdb {
 		void DefineGlobalVariable_Placeholder ();
 		void Close ();
 		void SetSymAttribute (
-			[In] SymbolToken method, 
-			[In, MarshalAs (UnmanagedType.LPWStr)] string name, 
-			[In] uint cData, 
+			[In] SymbolToken method,
+			[In, MarshalAs (UnmanagedType.LPWStr)] string name,
+			[In] uint cData,
 			[In, MarshalAs (UnmanagedType.LPArray, SizeParamIndex = 2)] byte[] signature);
 		void OpenNamespace ([In, MarshalAs (UnmanagedType.LPWStr)] string name);
 		void CloseNamespace ();
