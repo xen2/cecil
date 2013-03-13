@@ -166,7 +166,7 @@ namespace Mono.Cecil.Pdb {
 			for (int i = 0; i < variables.Count; i++)
 				root.Variables.Add (variables [i]);
 
-			body.DebugInformation.Scope = root;
+			DebugInformationFor (body).Scope = root;
 		}
 
 		static void ReadScopeAndLocals (PdbScope pdbScope, Scope parent, MethodBody body, InstructionMapper mapper)
@@ -191,6 +191,7 @@ namespace Mono.Cecil.Pdb {
 
 				var variable = body.Variables [index];
 				variable.Name = slot.name;
+				variable.IsCompilerGenerated = slot.flags == 4;
 
 				scope.Variables.Add (variable);
 			}
@@ -286,6 +287,7 @@ namespace Mono.Cecil.Pdb {
 
                 var variable = symbols.Variables [index];
                 variable.Name = slot.name;
+	            variable.IsCompilerGenerated = slot.flags == 4;
             }
 
             ReadLocals (scope.scopes, symbols);

@@ -83,7 +83,7 @@ namespace Mono.Cecil.Pdb
 
 		public void DefineLocalVariable2 (
 			string name,
-			FieldAttributes attributes,
+			int attributes,
 			SymbolToken sigToken,
 			SymAddressKind addrKind,
 			int addr1,
@@ -92,7 +92,7 @@ namespace Mono.Cecil.Pdb
 			int startOffset,
 			int endOffset)
 		{
-			m_writer.DefineLocalVariable2 (name, (int)attributes, sigToken, (int)addrKind, addr1, addr2, addr3, startOffset, endOffset);
+			m_writer.DefineLocalVariable2 (name, attributes, sigToken, (int)addrKind, addr1, addr2, addr3, startOffset, endOffset);
 		}
 
 		public void Close ()
