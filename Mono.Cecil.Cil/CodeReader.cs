@@ -295,7 +295,7 @@ namespace Mono.Cecil.Cil {
 
 		void ReadSection ()
 		{
-			Align (4);
+			AdvanceAligned (4);
 
 			const byte fat_format = 0x40;
 			const byte more_sects = 0x80;
@@ -366,7 +366,7 @@ namespace Mono.Cecil.Cil {
 			}
 		}
 
-		void Align (int align)
+		void AdvanceAligned (int align)
 		{
 			align--;
 			Advance (((position + align) & ~align) - position);
@@ -520,7 +520,7 @@ namespace Mono.Cecil.Cil {
 		void PatchRawSection (ByteBuffer buffer, MetadataBuilder metadata)
 		{
 			var position = base.position;
-			Align (4);
+			AdvanceAligned (4);
 			buffer.WriteBytes (base.position - position);
 
 			const byte fat_format = 0x40;

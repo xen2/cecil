@@ -633,12 +633,6 @@ namespace Mono.Cecil.Cil {
 			WriteUInt32 (token.ToUInt32 ());
 		}
 
-		void Align (int align)
-		{
-			align--;
-			WriteBytes (((position + align) & ~align) - position);
-		}
-
 		void EndMethod ()
 		{
 			current = (RVA) (code_base + position);
