@@ -112,6 +112,54 @@ namespace Mono.Cecil.Tests {
 			Assert.AreEqual (DocumentLanguageVendor.Microsoft, document.LanguageVendor);
 		}
 
+		[TestModule ("iterator.exe", SymbolReaderProvider = typeof (PdbReaderProvider), SymbolWriterProvider = typeof (PdbWriterProvider))]
+		public void IteratorResolved (ModuleDefinition module)
+		{
+			var type = module.GetType ("Program");
+			var method = type.GetMethod ("ArgumentIterator");
+
+			Assert.IsNotNull (method.Body.DebugInformation);
+			Assert.IsNotNull (method.Body.DebugInformation.IteratorType);
+
+			Assert.AreEqual ("<ArgumentIterator>d__0", method.Body.DebugInformation.IteratorType.Name);
+
+			var iterator = type.NestedTypes.First (t => t.Name == method.Body.DebugInformation.IteratorType.Name);
+			var move_next = iterator.GetMethod ("MoveNext");
+
+			Assert.IsNotNull (move_next.Body.DebugInformation);
+			Assert.AreEqual (1, move_next.Body.DebugInformation.IteratorScopes.Count);
+
+			var scope = move_next.Body.DebugInformation.IteratorScopes [0];
+
+			Assert.AreEqual (73, scope.Start.Offset);
+			Assert.AreEqual (135, scope.End.Offset);
+		}
+
+		[TestModule ("iterator.exe", SymbolReaderProvider = typeof (PdbReaderProvider), SymbolWriterProvider = typeof (PdbWriterProvider))]
+		public void IteratorUnresolved (ModuleDefinition module)
+		{
+			var type = module.GetType ("Program");
+			var method = type.GetMethod ("ArgumentIterator");
+
+			var symbols = new MethodSymbols (method.MetadataToken);
+			module.SymbolReader.Read (symbols);
+
+			Assert.AreEqual ("<ArgumentIterator>d__0", symbols.IteratorType);
+
+			var iterator = type.NestedTypes.First (t => t.Name == symbols.IteratorType);
+			var move_next = iterator.GetMethod ("MoveNext");
+
+			symbols = new MethodSymbols (move_next.MetadataToken);
+			module.SymbolReader.Read (symbols);
+
+			Assert.AreEqual (1, symbols.IteratorScopes.Count);
+
+			var scope = symbols.IteratorScopes [0];
+
+			Assert.AreEqual (73, scope.Start);
+			Assert.AreEqual (135, scope.End);
+		}
+
 		[Test]
 		public void CreateMethodFromScratch ()
 		{
