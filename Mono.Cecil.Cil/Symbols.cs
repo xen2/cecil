@@ -73,12 +73,7 @@ namespace Mono.Cecil.Cil {
 		}
 
 		public Collection<Scope> Scopes {
-			get {
-				if (scopes == null)
-					scopes = new Collection<Scope> ();
-
-				return scopes;
-			}
+			get { return scopes ?? (scopes = new Collection<Scope> ()); }
 		}
 
 		public bool HasVariables {
@@ -86,16 +81,11 @@ namespace Mono.Cecil.Cil {
 		}
 
 		public Collection<VariableDefinition> Variables {
-			get {
-				if (variables == null)
-					variables = new Collection<VariableDefinition> ();
-
-				return variables;
-			}
+			get { return variables ?? (variables = new Collection<VariableDefinition> ()); }
 		}
 	}
 
-	public class RangeSymbol {
+	public class InstructionRangeSymbol {
 
 		internal int start;
 		internal int end;
@@ -109,7 +99,7 @@ namespace Mono.Cecil.Cil {
 		}
 	}
 
-	public sealed class ScopeSymbol : RangeSymbol, IVariableDefinitionProvider {
+	public sealed class ScopeSymbol : InstructionRangeSymbol, IVariableDefinitionProvider {
 
 		Collection<ScopeSymbol> scopes;
 		Collection<VariableDefinition> variables;
@@ -119,12 +109,7 @@ namespace Mono.Cecil.Cil {
 		}
 
 		public Collection<ScopeSymbol> Scopes {
-			get {
-				if (scopes == null)
-					scopes = new Collection<ScopeSymbol> ();
-
-				return scopes;
-			}
+			get { return scopes ?? (scopes = new Collection<ScopeSymbol> ()); }
 		}
 
 		public bool HasVariables {
@@ -132,12 +117,7 @@ namespace Mono.Cecil.Cil {
 		}
 
 		public Collection<VariableDefinition> Variables {
-			get {
-				if (variables == null)
-					variables = new Collection<VariableDefinition> ();
-
-				return variables;
-			}
+			get { return variables ?? (variables = new Collection<VariableDefinition> ()); }
 		}
 	}
 
@@ -163,37 +143,22 @@ namespace Mono.Cecil.Cil {
 		internal MetadataToken local_var_token;
 		internal Collection<VariableDefinition> variables;
 		internal Collection<InstructionSymbol> instructions;
-		internal Collection<RangeSymbol> iterator_scopes;
+		internal Collection<InstructionRangeSymbol> iterator_scopes;
 
 		public bool HasVariables {
 			get { return !variables.IsNullOrEmpty (); }
 		}
 
 		public Collection<VariableDefinition> Variables {
-			get {
-				if (variables == null)
-					variables = new Collection<VariableDefinition> ();
-
-				return variables;
-			}
+			get { return variables ?? (variables = new Collection<VariableDefinition> ()); }
 		}
 
 		public Collection<InstructionSymbol> Instructions {
-			get {
-				if (instructions == null)
-					instructions = new Collection<InstructionSymbol> ();
-
-				return instructions;
-			}
+			get { return instructions ?? (instructions = new Collection<InstructionSymbol> ()); }
 		}
 
-		public Collection<RangeSymbol> IteratorScopes {
-			get {
-				if (iterator_scopes == null)
-					iterator_scopes = new Collection<RangeSymbol> ();
-
-				return iterator_scopes;
-			}
+		public Collection<InstructionRangeSymbol> IteratorScopes {
+			get { return iterator_scopes ?? (iterator_scopes = new Collection<InstructionRangeSymbol> ()); }
 		}
 
 		public ScopeSymbol Scope {

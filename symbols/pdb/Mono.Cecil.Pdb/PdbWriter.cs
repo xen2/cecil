@@ -188,7 +188,7 @@ namespace Mono.Cecil.Pdb {
 			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);
 		}
 
-		void DefineIteratorScopes (SymbolToken method_token, Collection<RangeSymbol> scopes)
+		void DefineIteratorScopes (SymbolToken method_token, Collection<InstructionRangeSymbol> scopes)
 		{
 			var buffer = new PE.ByteBuffer ();
 			buffer.WriteByte (4);
@@ -201,7 +201,7 @@ namespace Mono.Cecil.Pdb {
 			buffer.WriteInt32 (scopes.Count * 8 + 12);
 			buffer.WriteInt32 (scopes.Count);
 
-			foreach (RangeSymbol scope in scopes)
+			foreach (InstructionRangeSymbol scope in scopes)
 			{
 				buffer.WriteInt32 (scope.Start);
 				buffer.WriteInt32 (scope.End);

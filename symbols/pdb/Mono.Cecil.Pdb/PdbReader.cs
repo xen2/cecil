@@ -254,7 +254,7 @@ namespace Mono.Cecil.Pdb {
 			if (function.iteratorScopes != null)
 				foreach (Microsoft.Cci.ILocalScope scope in function.iteratorScopes)
 				{
-					RangeSymbol range = new RangeSymbol ();
+					InstructionRangeSymbol range = new InstructionRangeSymbol ();
 					range.start = (int) scope.Offset;
 					range.end   = (int)(scope.Offset + scope.Length);
 					symbols.IteratorScopes.Add (range);
