@@ -52,9 +52,6 @@ namespace Mono.Cecil.Cil {
 		Instruction start;
 		Instruction end;
 
-		Collection<Scope> scopes;
-		Collection<VariableDefinition> variables;
-
 		public Instruction Start {
 			get { return start; }
 			set { start = value; }
