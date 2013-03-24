@@ -117,7 +117,7 @@ namespace Mono.Cecil.Pdb {
 			if (!string.IsNullOrEmpty (function.iteratorClass))
 				DebugInformationFor (body).IteratorType = body.Method.DeclaringType.GetNestedType (function.iteratorClass);
 
-			if (function.iteratorScopes == null)
+			if (function.iteratorScopes == null || !IsIteratorMethod (body.Method))
 				return;
 
 			foreach (var scope in function.iteratorScopes) {
@@ -125,6 +125,11 @@ namespace Mono.Cecil.Pdb {
 				PopulateInstructionRange (range, scope.Offset, scope.Length, body, mapper);
 				DebugInformationFor (body).IteratorScopes.Add (range);
 			}
+		}
+
+		static bool IsIteratorMethod (MethodDefinition method)
+		{
+			return method.Name == "MoveNext";
 		}
 
 		static MethodDebugInformation DebugInformationFor (MethodBody body)
