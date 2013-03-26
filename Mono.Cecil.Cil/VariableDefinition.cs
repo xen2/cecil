@@ -30,15 +30,8 @@ namespace Mono.Cecil.Cil {
 
 	public sealed class VariableDefinition : VariableReference {
 
-		bool is_compiler_generated;
-
 		public bool IsPinned {
 			get { return variable_type.IsPinned; }
-		}
-
-		public bool IsCompilerGenerated {
-			get { return is_compiler_generated; }
-			set { is_compiler_generated = true; }
 		}
 
 		public VariableDefinition (TypeReference variableType)

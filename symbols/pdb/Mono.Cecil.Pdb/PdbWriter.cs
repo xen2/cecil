@@ -148,7 +148,7 @@ namespace Mono.Cecil.Pdb {
 		{
 			writer.DefineLocalVariable2 (
 				variable.Name,
-				variable.IsCompilerGenerated ? 1 : 0,
+				0,
 				local_var_token,
 				SymAddressKind.ILOffset,
 				variable.Index,

@@ -192,7 +192,6 @@ namespace Mono.Cecil.Pdb {
 
 				var variable = body.Variables [index];
 				variable.Name = slot.name;
-				variable.IsCompilerGenerated = slot.flags == 4;
 
 				scope.Variables.Add (variable);
 			}
@@ -288,7 +287,6 @@ namespace Mono.Cecil.Pdb {
 
                 var variable = symbols.Variables [index];
                 variable.Name = slot.name;
-	            variable.IsCompilerGenerated = slot.flags == 4;
             }
 
             ReadLocals (scope.scopes, symbols);
