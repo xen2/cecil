@@ -301,8 +301,15 @@ namespace Mono.Cecil.Pdb {
 		{
 			writer.OpenScope  (scope.Start);
 
-			foreach (var s in scope.Scopes)
-				WriteScope (symbols, s);
+			if (scope.HasUsedNamespaces) {
+				foreach (var n in scope.UsedNamespaces)
+					writer.UsingNamespace(n);
+			}
+
+			if (scope.HasScopes) {
+				foreach (var s in scope.Scopes)
+					WriteScope (symbols, s);
+			}
 
 			DefineVariables   (symbols, scope.Variables, scope.Start, scope.End) ;
 			writer.CloseScope (scope.End);

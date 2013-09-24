@@ -113,6 +113,7 @@ namespace Mono.Cecil.Cil {
 
 		Collection<ScopeSymbol> scopes;
 		Collection<VariableDefinition> variables;
+		Collection<string> used_namespaces;
 
 		public bool HasScopes {
 			get { return !scopes.IsNullOrEmpty (); }
@@ -124,6 +125,19 @@ namespace Mono.Cecil.Cil {
 					scopes = new Collection<ScopeSymbol> ();
 
 				return scopes;
+			}
+		}
+
+		public bool HasUsedNamespaces {
+			get { return !used_namespaces.IsNullOrEmpty (); }
+		}
+
+		public Collection<string> UsedNamespaces {
+			get {
+				if (used_namespaces == null)
+					used_namespaces = new Collection<string>();
+
+				return used_namespaces;
 			}
 		}
 

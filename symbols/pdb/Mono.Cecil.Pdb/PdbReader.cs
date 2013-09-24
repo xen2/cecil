@@ -259,6 +259,9 @@ namespace Mono.Cecil.Pdb {
 			s.start = (int) scope.offset;
 			s.end   = (int)(scope.offset + scope.length);
 
+			foreach (var usedNamespace in scope.usedNamespaces)
+				s.UsedNamespaces.Add(usedNamespace);
+
 			if (parent != null)
 				parent.Scopes.Add (s);
 			else
