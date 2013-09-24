@@ -62,20 +62,46 @@ namespace Mono.Cecil.Pdb {
 			var sym_token = new SymbolToken (method_token.ToInt32 ());
 
 			var instructions = CollectInstructions (body);
-			if (instructions.Count == 0)
+			if (instructions.Count == 0 && !body.HasVariables)
 				return;
 
-			var start_offset = 0;
-			var end_offset = body.CodeSize;
-
 			writer.OpenMethod (sym_token);
-			writer.OpenScope (start_offset);
 
 			DefineSequencePoints (instructions);
-			DefineVariables (body, start_offset, end_offset);
 
-			writer.CloseScope (end_offset);
+			if (body.Scope != null)
+				WriteScope (body, body.Scope);
+			else
+			if (body.HasVariables)
+			{
+				var start_offset = 0;
+				var end_offset = body.CodeSize;
+
+				writer.OpenScope  (start_offset);
+				writer.CloseScope (end_offset);
+			}
+
+			if (body.IteratorType != null)
+				DefineIteratorType   (sym_token, body.IteratorType.Name);
+
+			if (body.iterator_scopes != null)
+				DefineIteratorScopes (sym_token, body.IteratorScopes, body.CodeSize);
+
 			writer.CloseMethod ();
+		}
+
+		void WriteScope (MethodBody body, Scope scope)
+		{
+			var start_offset = scope.Start.Offset;
+			var end_offset   = scope.End.Next != null ? scope.End.Next.Offset : body.CodeSize;
+			
+			writer.OpenScope  (start_offset);
+
+			foreach (var s in scope.Scopes)
+				WriteScope (body, s);
+
+			DefineVariables   (body, scope.Variables, start_offset, end_offset) ;
+			writer.CloseScope (end_offset);
 		}
 
 		Collection<Instruction> CollectInstructions (MethodBody body)
@@ -96,14 +122,10 @@ namespace Mono.Cecil.Pdb {
 			return collection;
 		}
 
-		void DefineVariables (MethodBody body, int start_offset, int end_offset)
+		void DefineVariables (MethodBody body, Collection<VariableDefinition> variables, int start_offset, int end_offset)
 		{
-			if (!body.HasVariables)
-				return;
-
 			var sym_token = new SymbolToken (body.LocalVarToken.ToInt32 ());
 
-			var variables = body.Variables;
 			for (int i = 0; i < variables.Count; i++) {
 				var variable = variables [i];
 				CreateLocalVariable (variable, sym_token, start_offset, end_offset);
@@ -159,26 +181,107 @@ namespace Mono.Cecil.Pdb {
 			return doc_writer;
 		}
 
+		void DefineIteratorType (SymbolToken method_token, string name)
+		{
+			var buffer = new PE.ByteBuffer ();
+			buffer.WriteByte (4);
+			buffer.WriteByte (1);
+			buffer.Align     (4);
+			buffer.WriteByte (4);
+			buffer.WriteByte (4);
+			buffer.Align	 (4);
+		
+			var length = 10 + (uint) name.Length * 2;
+			while (length % 4 > 0)
+				length++;
+		
+			buffer.WriteUInt32 (length);
+			buffer.WriteBytes (System.Text.Encoding.Unicode.GetBytes (name));
+			buffer.WriteByte (0);
+			buffer.Align	 (4);
+		
+			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);
+		}
+
+		void DefineIteratorScopes (SymbolToken method_token, Collection<RangeSymbol> scopes)
+		{
+			var buffer = new PE.ByteBuffer ();
+			buffer.WriteByte (4);
+			buffer.WriteByte (1);
+			buffer.Align     (4);
+			buffer.WriteByte (4);
+			buffer.WriteByte (3);
+			buffer.Align	 (4);
+		
+			buffer.WriteInt32 (scopes.Count * 8 + 12);
+			buffer.WriteInt32 (scopes.Count);
+		
+			foreach (RangeSymbol scope in scopes)
+			{
+				buffer.WriteInt32 (scope.Start);
+				buffer.WriteInt32 (scope.End);
+			}
+		
+			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);
+		}
+
+		void DefineIteratorScopes (SymbolToken method_token, Collection<InstructionRange> scopes, int code_size)
+		{
+			var buffer = new PE.ByteBuffer ();
+			buffer.WriteByte (4);
+			buffer.WriteByte (1);
+			buffer.Align     (4);
+			buffer.WriteByte (4);
+			buffer.WriteByte (3);
+			buffer.Align	 (4);
+		
+			buffer.WriteInt32 (scopes.Count * 8 + 12);
+			buffer.WriteInt32 (scopes.Count);
+		
+			foreach (InstructionRange scope in scopes)
+			{
+				buffer.WriteInt32 (scope.Start.Offset);
+				buffer.WriteInt32 (scope.End != null && scope.End.Next != null ? scope.End.Next.Offset : code_size - 1);
+			}
+		
+			writer.SetSymAttribute (method_token, "MD2", buffer.length, buffer.buffer);
+		}
+
 		public void Write (MethodSymbols symbols)
 		{
+			if (symbols.instructions.IsNullOrEmpty () && !symbols.HasVariables)
+				return;
+
 			var sym_token = new SymbolToken (symbols.MethodToken.ToInt32 ());
 
-			var start_offset = 0;
-			var end_offset = symbols.CodeSize;
-
 			writer.OpenMethod (sym_token);
-			writer.OpenScope (start_offset);
-
 			DefineSequencePoints (symbols);
-			DefineVariables (symbols, start_offset, end_offset);
 
-			writer.CloseScope (end_offset);
+			if (symbols.Scope != null)
+				WriteScope (symbols, symbols.Scope);
+			else
+			{
+				var start_offset = 0;
+				var end_offset = symbols.CodeSize;
+
+				writer.OpenScope  (start_offset);
+				writer.CloseScope (end_offset);
+			}
+
+			if (!string.IsNullOrEmpty (symbols.IteratorType))
+				DefineIteratorType   (sym_token, symbols.IteratorType);
+
+			if (symbols.iterator_scopes != null)
+				DefineIteratorScopes (sym_token, symbols.IteratorScopes);
+
 			writer.CloseMethod ();
 		}
 
 		void DefineSequencePoints (MethodSymbols symbols)
 		{
 			var instructions = symbols.instructions;
+			if (instructions == null)
+				return;
 
 			for (int i = 0; i < instructions.Count; i++) {
 				var instruction = instructions [i];
@@ -194,14 +297,21 @@ namespace Mono.Cecil.Pdb {
 			}
 		}
 
-		void DefineVariables (MethodSymbols symbols, int start_offset, int end_offset)
+		void WriteScope (MethodSymbols symbols, ScopeSymbol scope)
 		{
-			if (!symbols.HasVariables)
-				return;
+			writer.OpenScope  (scope.Start);
 
+			foreach (var s in scope.Scopes)
+				WriteScope (symbols, s);
+
+			DefineVariables   (symbols, scope.Variables, scope.Start, scope.End) ;
+			writer.CloseScope (scope.End);
+		}
+
+		void DefineVariables (MethodSymbols symbols, Collection<VariableDefinition> variables, int start_offset, int end_offset)
+		{
 			var sym_token = new SymbolToken (symbols.LocalVarToken.ToInt32 ());
 
-			var variables = symbols.Variables;
 			for (int i = 0; i < variables.Count; i++) {
 				var variable = variables [i];
 				CreateLocalVariable (variable, sym_token, start_offset, end_offset);
