@@ -447,6 +447,30 @@ namespace Mono.Cecil.Tests {
 			Assert.AreEqual ("CaBlob", (string) attribute.ConstructorArguments [0].Value);
 		}
 
+        [Test]
+        public void TypeReferenceStruct()
+        {
+            TestCSharp("CustomAttributes.cs", module =>
+            {
+                var @struct = module.GetType("Struct");
+
+                var attribute = GetAttribute(@struct, "Foo");
+                Assert.IsNotNull(attribute);
+
+                Assert.AreEqual(1, attribute.ConstructorArguments.Count);
+
+                var argument = attribute.ConstructorArguments[0];
+
+                Assert.AreEqual("System.Type", argument.Type.FullName);
+
+                var type = argument.Value as TypeReference;
+                Assert.IsNotNull(type);
+
+                Assert.AreEqual("System.Collections.Generic.Dictionary`2", type.FullName);
+
+            });
+        }
+
 		static void AssertCustomAttribute (string expected, CustomAttribute attribute)
 		{
 			Assert.AreEqual (expected, PrettyPrint (attribute));

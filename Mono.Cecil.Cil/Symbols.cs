@@ -9,6 +9,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using SR = System.Reflection;
@@ -86,16 +87,21 @@ namespace Mono.Cecil.Cil {
 		}
 	}
 
-	public sealed class MethodSymbols {
-
+	public class MethodSymbols
+    {
 		internal int code_size;
-		internal string method_name;
-		internal MetadataToken method_token;
-		internal MetadataToken local_var_token;
+        internal MethodBody method_body;
+        internal MetadataToken method_token;
+        internal MetadataToken local_var_token;
 		internal Collection<VariableDefinition> variables;
 		internal Collection<InstructionSymbol> instructions;
 
-		public bool HasVariables {
+	    public MethodBody Body
+	    {
+	        get { return method_body; }
+	    }
+
+	    public bool HasVariables {
 			get { return !variables.IsNullOrEmpty (); }
 		}
 
@@ -122,7 +128,7 @@ namespace Mono.Cecil.Cil {
 		}
 
 		public string MethodName {
-			get { return method_name; }
+			get { return method_body.Method.Name; }
 		}
 
 		public MetadataToken MethodToken {
@@ -133,24 +139,24 @@ namespace Mono.Cecil.Cil {
 			get { return local_var_token; }
 		}
 
-		internal MethodSymbols (string methodName)
+		public MethodSymbols (MethodBody methodBody)
 		{
-			this.method_name = methodName;
-		}
-
-		public MethodSymbols (MetadataToken methodToken)
-		{
-			this.method_token = methodToken;
+			this.method_body = methodBody;
 		}
 	}
 
 	public delegate Instruction InstructionMapper (int offset);
 
+    public interface ISymbolReaderResolver {
+        MethodReference LookupMethod(MetadataToken old_token);
+    }
+
 	public interface ISymbolReader : IDisposable {
 
+	    MethodSymbols Create (MethodBody methodBody);
 		bool ProcessDebugHeader (ImageDebugDirectory directory, byte [] header);
-		void Read (MethodBody body, InstructionMapper mapper);
-		void Read (MethodSymbols symbols);
+		void Read (MethodBody body, InstructionMapper mapper, ISymbolReaderResolver symbolReaderResolver);
+		void Read (MethodSymbols symbols, ISymbolReaderResolver symbolReaderResolver);
 	}
 
 	public interface ISymbolReaderProvider {

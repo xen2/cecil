@@ -681,6 +681,7 @@ namespace Mono.Cecil {
 		readonly Dictionary<MethodSpecRow, MetadataToken> method_spec_map;
 		readonly Collection<GenericParameter> generic_parameters;
 		readonly Dictionary<MetadataToken, MetadataToken> method_def_map;
+        readonly Dictionary<MetadataToken, MetadataToken> method_def_map_reverse;
 
 		readonly internal CodeWriter code;
 		readonly internal DataBuffer data;
@@ -759,8 +760,10 @@ namespace Mono.Cecil {
 			member_ref_map = new Dictionary<MemberRefRow, MetadataToken> (row_equality_comparer);
 			method_spec_map = new Dictionary<MethodSpecRow, MetadataToken> (row_equality_comparer);
 			generic_parameters = new Collection<GenericParameter> ();
-			if (write_symbols)
-				method_def_map = new Dictionary<MetadataToken, MetadataToken> ();
+		    if (write_symbols) {
+		        method_def_map = new Dictionary<MetadataToken, MetadataToken> ();
+		        method_def_map_reverse = new Dictionary<MetadataToken, MetadataToken> ();
+		    }
 		}
 
 		TextMap CreateTextMap ()
@@ -1098,10 +1101,12 @@ namespace Mono.Cecil {
 				var method = methods [i];
 				var new_token = new MetadataToken (TokenType.Method, method_rid++);
 
-				if (write_symbols && method.token != MetadataToken.Zero)
-					method_def_map.Add (new_token, method.token);
+			    if (write_symbols && method.token != MetadataToken.Zero) {
+			        method_def_map.Add (new_token, method.token);
+                    //method_def_map_reverse.Add(method.token, new_token);
+			    }
 
-				method.token = new_token;
+			    method.token = new_token;
 			}
 		}
 
@@ -1109,6 +1114,18 @@ namespace Mono.Cecil {
 		{
 			return method_def_map.TryGetValue (new_token, out original);
 		}
+
+        public bool TryGetNewMethodToken (MetadataToken old_token, out MetadataToken new_token)
+        {
+            return method_def_map_reverse.TryGetValue(old_token, out new_token);
+        }
+
+        public MetadataToken GetNewMethodToken(MetadataToken old_token)
+        {
+            MetadataToken new_token;
+            method_def_map_reverse.TryGetValue(old_token, out new_token);
+            return new_token;
+        }
 
 		MetadataToken GetTypeToken (TypeReference type)
 		{
