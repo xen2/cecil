@@ -11,7 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Linq;
 using Microsoft.Cci.Pdb;
 
 using Mono.Cecil.Cil;
@@ -85,7 +85,12 @@ namespace Mono.Cecil.Pdb {
 			return true;
 		}
 
-		public void Read (MethodBody body, InstructionMapper mapper)
+        public MethodSymbols Create(MethodBody methodBody)
+        {
+            return new PdbMethodSymbols(methodBody);
+        }
+
+        public void Read (MethodBody body, InstructionMapper mapper)
 		{
 			var method_token = body.Method.MetadataToken;
 
@@ -199,7 +204,7 @@ namespace Mono.Cecil.Pdb {
 			return document;
 		}
 
-		public void Read (MethodSymbols symbols)
+		public void Read (MethodSymbols symbols, ISymbolReaderResolver symbolReaderResolver)
 		{
 			PdbFunction function;
 			if (!functions.TryGetValue (symbols.MethodToken.ToUInt32 (), out function))
@@ -207,6 +212,33 @@ namespace Mono.Cecil.Pdb {
 
 			ReadSequencePoints (function, symbols);
 			ReadLocals (function.scopes, symbols);
+
+		    var pdbSymbols = symbols as PdbMethodSymbols;
+		    if (pdbSymbols != null) {
+		        pdbSymbols.IteratorClass = function.iteratorClass;
+                if (function.iteratorScopes != null)
+		            pdbSymbols.IteratorScopes = function.iteratorScopes.Select (x => new PdbIteratorScope (CodeReader.GetInstruction(symbols.Body.Instructions, (int)x.Offset), CodeReader.GetInstruction(symbols.Body.Instructions, (int)x.Offset + (int)x.Length))).ToList ();
+                pdbSymbols.MethodWhoseUsingInfoAppliesToThisMethod = symbolReaderResolver.LookupMethod (new MetadataToken(function.tokenOfMethodWhoseUsingInfoAppliesToThisMethod));
+
+                // Note: since we don't generate scopes from PDB, we use first scope and ignore custom data stored in function.usedNamespaces for now
+		        pdbSymbols.UsedNamespaces = function.scopes.Length > 0 && function.scopes[0].usedNamespaces.Length > 0
+                    ? function.scopes[0].usedNamespaces.ToList ()
+                    : null;
+		        pdbSymbols.UsingCounts = function.usingCounts != null ? function.usingCounts.ToList () : null;
+
+                // Store asyncMethodInfo
+		        if (function.synchronizationInformation != null) {
+		            pdbSymbols.SynchronizationInformation = new PdbSynchronizationInformation {
+                        KickoffMethod = symbolReaderResolver.LookupMethod(new MetadataToken(function.synchronizationInformation.kickoffMethodToken)),
+		                GeneratedCatchHandlerIlOffset = function.synchronizationInformation.generatedCatchHandlerIlOffset,
+		                SynchronizationPoints = function.synchronizationInformation.synchronizationPoints.Select (x => new PdbSynchronizationPoint {
+		                    SynchronizeOffset = x.synchronizeOffset,
+                            ContinuationMethod = symbolReaderResolver.LookupMethod(new MetadataToken(x.continuationMethodToken)),
+		                    ContinuationOffset = x.continuationOffset,
+		                }).ToList (),
+		            };
+		        }
+		    }
 		}
 
 		void ReadLocals (PdbScope [] scopes, MethodSymbols symbols)

@@ -52,7 +52,12 @@ namespace Mono.Cecil.Mdb {
 			this.documents = new Dictionary<string, Document> ();
 		}
 
-		public bool ProcessDebugHeader (ImageDebugDirectory directory, byte [] header)
+	    public MethodSymbols Create (MethodBody methodBody)
+	    {
+	        return new MethodSymbols (methodBody);
+	    }
+
+	    public bool ProcessDebugHeader (ImageDebugDirectory directory, byte [] header)
 		{
 			return symbol_file.Guid == module.Mvid;
 		}
@@ -163,7 +168,7 @@ namespace Mono.Cecil.Mdb {
 			return false;
 		}
 
-		public void Read (MethodSymbols symbols)
+		public void Read (MethodSymbols symbols, ISymbolReaderResolver symbolReaderResolver)
 		{
 			var entry = symbol_file.GetMethodByToken (symbols.MethodToken.ToInt32 ());
 			if (entry == null)

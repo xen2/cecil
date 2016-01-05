@@ -150,3 +150,8 @@ class OpenGeneric<X, Y> {
 [Foo (typeof (Dictionary<string, OpenGeneric<Machin, int>[,]>))]
 class ClosedGeneric {
 }
+
+[Foo(typeof(TimeSpan))]
+struct Struct {
+    private TimeSpan test;
+}

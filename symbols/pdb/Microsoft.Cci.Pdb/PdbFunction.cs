@@ -454,7 +454,7 @@ namespace Microsoft.Cci.Pdb {
     //}
   }
 
-  internal class PdbSynchronizationInformation {
+  public class PdbSynchronizationInformation {
     internal uint kickoffMethodToken;
     internal uint generatedCatchHandlerIlOffset;
     internal PdbSynchronizationPoint[] synchronizationPoints;
