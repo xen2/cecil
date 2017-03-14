@@ -248,6 +248,14 @@ namespace Mono.Cecil.Pdb {
 				}
 			}
 
+			// TODO: Not serializing constant type token properly yet
+			//if (!scope.constants.IsNullOrEmpty ()) {
+			//    for (int i = 0; i < scope.constants.Count; ++i) {
+			//        var constant = scope.constants [i];
+			//        CreateConstant (constant);
+			//    }
+			//}
+
 			if (!scope.scopes.IsNullOrEmpty ()) {
 				for (int i = 0; i < scope.scopes.Count; i++) {
 					uint ignored;
@@ -285,6 +293,17 @@ namespace Mono.Cecil.Pdb {
 				0,
 				start_offset,
 				end_offset);
+		}
+
+		void CreateConstant (ConstantDebugInformation constant)
+		{
+			// TODO: Support constant symbol token
+			var symbolToken = new SymbolToken ();
+
+			writer.DefineConstant2 (
+				constant.Name,
+				constant.Value,
+				symbolToken);
 		}
 
 		SymDocumentWriter GetDocument (Document document)

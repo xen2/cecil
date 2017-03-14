@@ -78,6 +78,11 @@ namespace Mono.Cecil.Pdb {
 			[In] int addr3,
 			[In] int startOffset,
 			[In] int endOffset);
+		void DefineGlobalVariable2_Placeholder ();
+		void DefineConstant2 (
+			[In, MarshalAs (UnmanagedType.LPWStr)] string name,
+			[In] Variant value,
+			[In] SymbolToken sigToken);
 	}
 }
 

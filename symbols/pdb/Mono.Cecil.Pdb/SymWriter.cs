@@ -71,6 +71,18 @@ namespace Mono.Cecil.Pdb
 			m_writer.DefineLocalVariable2 (name, (int)attributes, sigToken, (int)addrKind, addr1, addr2, addr3, startOffset, endOffset);
 		}
 
+		public unsafe void DefineConstant2 (
+			string name,
+			object value,
+			SymbolToken sigToken)
+		{
+			var variant = new Variant ();
+		    if (value == null)
+		        value = 0;
+			Marshal.GetNativeVariantForObject(value, new IntPtr(&variant));
+			m_writer.DefineConstant2 (name, variant, sigToken);
+		}
+
 		public void Close ()
 		{
 			m_writer.Close ();

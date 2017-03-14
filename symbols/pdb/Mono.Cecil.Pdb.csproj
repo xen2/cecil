@@ -5,6 +5,7 @@
     <RootNamespace>Mono.Cecil.Pdb</RootNamespace>
     <AssemblyName>Mono.Cecil.Pdb</AssemblyName>
     <NoWarn>0649</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Mono.Cecil.csproj">
